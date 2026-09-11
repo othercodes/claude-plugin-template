@@ -1,0 +1,2 @@
+# <prompt regex, case-insensitive>	<message>   (TAB-separated; '#' and blank lines skipped)
+\bmerged\b	[reminder] A merge just happened. Do housekeeping unasked: checkout the default branch, pull --ff-only, fetch --prune, delete the merged branch.
