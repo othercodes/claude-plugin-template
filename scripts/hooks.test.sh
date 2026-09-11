@@ -28,6 +28,8 @@ same "never above \$HOME"             ""                          "$(find_claude
 same "outside \$HOME it walks to /"   "$TMP/.claude/context"      "$(find_claude_dir "$TMP/x/y" context)"
 same "empty cwd finds nothing"        ""                          "$(find_claude_dir "" context)"
 same "relative cwd finds nothing"     ""                          "$(find_claude_dir "ws" context)"
+touch "$HOME/ws/.claude/wiki.md"
+same "a file is found too"            "$HOME/ws/.claude/wiki.md"  "$(find_claude_dir "$HOME/ws/repo" wiki.md)"
 
 echo
 if [ "$FAILS" -eq 0 ]; then echo "ALL PASS"; else echo "$FAILS FAILURE(S)"; exit 1; fi

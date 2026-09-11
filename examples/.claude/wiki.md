@@ -1,0 +1,7 @@
+- Database: 🧠 Example Knowledge
+- Page id: 00000000-0000-0000-0000-000000000000
+- Data source: collection://00000000-0000-0000-0000-000000000000
+- Shared area: infrastructure
+- Secrets store: 1Password
+- Language: English
+- Sources: Slack, the issue tracker, GitHub, Sentry, the source code
