@@ -24,6 +24,7 @@ the scripts run on bash 3.2, the macOS default.
   context/cards/<key>.md   lazy, injected on the first touch of a matching file
   context/cards.map        <path regex><TAB><key>
   reminders/*.rules        <prompt regex><TAB><message>
+  wiki.md                  using-wiki config (optional, see Skills)
 ```
 
 Each hook walks up from the session cwd to the first directory holding
@@ -87,6 +88,62 @@ Ask "is the plugin set up correctly" or run the `doctor` skill. It runs every
 which `.claude/` it found and the always-on size, and flags rule lines without a
 TAB and `cards.map` keys with no card file. A new skill adds its own checks by
 dropping a `<skill>.doctor.sh` next to it (protocol in `skills/doctor/scripts/doctor.sh`).
+
+## Skills
+
+### using-wiki
+
+An LLM-maintained knowledge base in a team-shared Notion database. The skill
+consults it (Query), writes to it through a propose-and-approve gate (Ingest),
+health-checks it (Lint) and creates or adopts it (Setup). It needs a Notion MCP
+connected (`/mcp`) and uses whichever one is installed.
+
+#### Using it
+
+Talk to Claude as usual: the skill loads on its own when the prompt is about the
+wiki. To call it explicitly: `/claude-plugin-template:using-wiki <request>`.
+
+| Operation | Ask for example | What happens |
+| --- | --- | --- |
+| Setup | "set up the wiki" | Asks whether to adopt an existing database or create one, proposes the schema, creates the database and its views (or lists the views to add by hand), then proposes `.claude/wiki.md`. Runs on its own the first time, when there is no config. |
+| Query | "what does the wiki say about token caching?" | Searches the database scoped by `Area` (the area in play plus the shared area), opens only the relevant pages, and answers citing pages and code. |
+| Ingest | "document this in the wiki", "write a post-mortem of today's outage" | Drafts the note (properties and full body), shows it as a preview, and writes to Notion only after your OK. |
+| Lint | "lint the wiki" | Lists notes with missing properties, broken naming, stale or duplicated facts, each with a suggested fix. Fixes go through the same OK. |
+
+Every write to Notion (a note, a new `Type`, `Tag` or `Area` option, the
+schema) waits for your OK, because the base is shared.
+
+#### Notes
+
+Each note is a row of the database with the properties `Name`, `Summary`,
+`Type`, `Tags` and `Area`. `Type` is one of `knowledge` (how something works
+now), `procedure` (a runbook), `report` (a dated incident or investigation) or
+`feature design` (a proposal). The full schema and writing conventions are in
+`skills/using-wiki/SKILL.md`.
+
+#### Configuration
+
+Which database, and what varies by project (shared area, secrets store,
+language, sources), lives in the project's `.claude/wiki.md`. When the skill
+loads, a `` !`...` `` line in its `SKILL.md` runs
+`skills/using-wiki/scripts/wiki-config.sh`, which finds `.claude/wiki.md` from
+`${CLAUDE_PROJECT_DIR}` up (the same walk the hooks do) and prints it into the
+skill. The config costs tokens only when the wiki is used. With no config the
+skill starts with Setup, which creates or adopts the database and writes
+`.claude/wiki.md`. The script always exits 0, because a failing `` !`...` ``
+command aborts the whole skill. `examples/.claude/wiki.md` shows the format.
+
+| Field | Used for |
+| --- | --- |
+| `Database` | the database name, to find it again with a search if an id stops resolving |
+| `Page id` | the Notion database every note lives in |
+| `Data source` | `collection://...`, for SQL queries over the notes |
+| `Shared area` | the `Area` option for cross-cutting notes, always included when searching |
+| `Secrets store` | where secrets live, cited instead of pasted into a note |
+| `Language` | the language notes are written in (English if unset) |
+| `Sources` | the systems notes cite (chat, tracker, VCS, error monitor, source code) |
+
+Commit `.claude/wiki.md` so the whole team works against the same database.
 
 ## Disabling hooks
 
