@@ -1,0 +1,13 @@
+{
+  "name": "claude-plugin-template",
+  "description": "Claude Code plugin template shipping claude-context-engine: project-local context and reminders.",
+  "owner": {
+    "name": "usantisteban"
+  },
+  "plugins": [
+    {
+      "name": "claude-plugin-template",
+      "source": "./"
+    }
+  ]
+}

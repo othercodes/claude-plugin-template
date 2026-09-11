@@ -1,0 +1,47 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        # macOS runs the hooks under /bin/bash 3.2, as a developer's Mac does.
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: jq
+        run: |
+          command -v jq || brew install jq
+
+      - name: JSON is valid
+        run: |
+          for f in $(git ls-files '*.json'); do jq empty "$f" || { echo "invalid JSON: $f"; exit 1; }; done
+
+      - name: Scripts parse
+        run: |
+          for f in $(git ls-files '*.sh'); do /bin/bash -n "$f" || exit 1; done
+
+      - name: Self-tests
+        run: |
+          for t in $(git ls-files '*.test.sh'); do echo "== $t"; /bin/bash "$t" || exit 1; done
+
+      - name: Skill frontmatter
+        run: |
+          errors=0
+          for f in $(git ls-files 'skills/*/SKILL.md'); do
+            [ "$(head -1 "$f")" = "---" ] || { echo "$f: no YAML frontmatter"; errors=1; continue; }
+            fm=$(sed -n '2,/^---$/p' "$f" | sed '$d')
+            name=$(printf '%s\n' "$fm" | sed -n 's/^name:[[:space:]]*//p')
+            [ "$name" = "$(basename "$(dirname "$f")")" ] || { echo "$f: name '$name' must match its directory"; errors=1; }
+            printf '%s\n' "$fm" | grep -q '^description:' || { echo "$f: no description"; errors=1; }
+            # A plain YAML scalar holding ': ' parses as a nested mapping and breaks the frontmatter.
+            printf '%s\n' "$fm" | grep -nE "^[a-zA-Z][a-zA-Z0-9_-]*:[[:space:]]+[^\"'[:space:]].*:[[:space:]]" \
+              && { echo "$f: unquoted value contains ': ', reword it"; errors=1; }
+          done
+          exit $errors

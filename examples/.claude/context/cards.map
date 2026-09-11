@@ -1,0 +1,2 @@
+# <path regex, relative to the project root>	<card key>   (TAB-separated; '#' and blank lines skipped)
+^src/	src

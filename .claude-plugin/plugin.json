@@ -1,0 +1,7 @@
+{
+  "name": "claude-plugin-template",
+  "version": "0.1.0",
+  "description": "Plugin template shipping claude-context-engine: injects each project's .claude/context/ and .claude/reminders/ into Claude Code sessions.",
+  "keywords": ["context", "reminders", "hooks", "template"],
+  "skills": "./skills/"
+}
